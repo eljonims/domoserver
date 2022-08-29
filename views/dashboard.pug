@@ -1,0 +1,53 @@
+extends layout.pug
+
+
+            
+block content
+       
+    div 
+        label(data-topic='z3/claridad') *   
+        input(type="checkbox" data-topic="casa/estudio/actuadores/luz/1/valor/=")   
+        label(data-topic='z3/movimiento')
+
+block finalScripts
+
+    script. 
+        const socket = io('/');
+        // recuperar los valores de los sensores
+
+        window.addEventListener('load', function(){
+        
+            
+
+            // ************  SOLICITAR VALORES INICIALES A MOSTRAR 
+
+            let lista = document.querySelectorAll('[data-topic]');  // todos los nodos DOM que guardan relación con un topic MQTT 
+            for(const nodo of lista){
+                console.log(`emitiendo ${nodo.dataset.topic}`)
+                socket.emit('topic', `${nodo.dataset.topic}?`, "");
+                if(nodo.nodeName == "INPUT" && nodo.type === "checkbox"){ // actuadores interruptores
+                    nodo.addEventListener('change',function(e){
+                        socket.emit('topic',`${nodo.dataset.topic}`,e.target.checked ? '1':'0');
+                    });
+                }                                  
+            }
+                            
+            socket.on('topic',function(topic, val){
+                console.log(` recibido topic: ${topic} con val: ${val}`)
+                let nodo = document.querySelector(`[data-topic='${topic}']`); //busca el nodo que tiene ese topico en data-topic
+                
+                if(nodo !== null){
+                    switch (nodo.nodeName){
+                    case "LABEL":
+                        nodo.innerHTML = val;
+                        break;
+                    case "INPUT":
+                        if(nodo.type === "checkbox"){
+                            nodo.checked = val === '1'? true: false;
+                        }
+                        break;
+                    }
+                }
+            })
+
+        });
