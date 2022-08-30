@@ -8,6 +8,11 @@ block content
         label(data-topic='z3/claridad') *   
         input(type="checkbox" data-topic="casa/estudio/actuadores/luz/1/valor/=")   
         label(data-topic='z3/movimiento')
+        button(type="button" data-topic='z3/persiana/subir') subir 
+        button(type="button" data-topic='z3/persiana/bajar') bajar 
+        button(type="button" data-topic='z3/persiana/detener') detener 
+        | altura persiana
+        label(data-topic='z3/persiana/altura') 
 
 block finalScripts
 
@@ -49,5 +54,15 @@ block finalScripts
                     }
                 }
             })
+
+            document.querySelector('[data-topic="z3/persiana/subir"]').addEventListener('click', function(e){
+                socket.emit('topic','z3/persiana/subir',null);
+            });
+            document.querySelector('[data-topic="z3/persiana/bajar"]').addEventListener('click', function(e){
+                socket.emit('topic','z3/persiana/bajar',null);
+            });
+            document.querySelector('[data-topic="z3/persiana/detener"]').addEventListener('click', function(e){
+                socket.emit('topic','z3/persiana/detener',null);
+            });
 
         });
