@@ -60,6 +60,9 @@ function iniciar (webserver){
         }
        // debug(`${topic}  ${message.toString()}`)
     });
+    setInterval(()=>{
+        clienteMQTT.publish('en_linea',null);
+    },15_000)
 }
 
 
