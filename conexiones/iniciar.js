@@ -21,13 +21,7 @@ function iniciar (webserver){
     })
     clienteMQTT.on('connect', function(){
         debug(`conectado a broker: ${clienteMQTT.connected}`);
-        clienteMQTT.subscribe('presence', function(err){
-            if(!err){
-                clienteMQTT.publish('presence', 'presence: domoserver');
-            }
-        });
-        clienteMQTT.subscribe('casa/#');
-        clienteMQTT.subscribe('z3/#');
+        clienteMQTT.subscribe('#');
     });
     //---------------------------------------------------------------------
     io = socketIo(webserver);
@@ -43,13 +37,16 @@ function iniciar (webserver){
         let horas = fecha.getHours();
         let minutos = fecha.getMinutes();
 
-        if(topic == 'casa/recibidor/sensores/claridad/1/valor/$'){
+        let reemitirPorSocket = true;
+        if(topic == 'presencia?'){
+            clienteMQTT.publish('presencia', 'presencia: domoserver');
+        }else if(topic == 'z1/claridad'){
+
             casa.z1.claridad = parseInt(message.toString(),10);
-            casa.z1.luz.estado = false;
-        }
-        io.of('/').emit('topic',topic, message.toString());     
-     
-        if(topic == 'casa/recibidor/sensores/movimiento/1/valor/$' && message.toString() == '1' && casa.z1.claridad < 6  && !casa.z1.luz.estado){
+            casa.z1.luz.estado = casa.z1.claridad > 15;
+
+        } else if(topic == 'z1/movimiento' && message.toString() == '1' && casa.z1.claridad < 6  && !casa.z1.luz.estado){
+            
             clienteMQTT.publish('casa/recibidor/actuadores/luz/1/valor/=', '1');
             casa.z1.luz.estado = true;
             setTimeout(()=>{
@@ -58,11 +55,26 @@ function iniciar (webserver){
             },7000);
 
         }
+        
+        if(reemitirPorSocket){
+            io.of('/').emit('topic',topic, message.toString());  
+        }
        // debug(`${topic}  ${message.toString()}`)
     });
     setInterval(()=>{
         clienteMQTT.publish('en_linea',null);
-    },15_000)
+    },15_000);
+    setInterval(()=>{
+        clienteMQTT.publish('z1/claridad?',null);
+        clienteMQTT.publish('z3/claridad?',null);
+    },10000);
+    setInterval(()=>{
+        clienteMQTT.publish('z1/temperatura?',null);
+        clienteMQTT.publish('z1/humedad?',null);
+        clienteMQTT.publish('z3/temperatura?',null);
+        clienteMQTT.publish('z3/humedad?',null);
+    }, 60_000);
+
 }
 
 
